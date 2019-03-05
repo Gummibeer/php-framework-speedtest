@@ -1,0 +1,26 @@
+version: '3'
+services:
+    php:
+        build:
+            context: ./docker/php
+            args:
+                GITHUB_OAUTH_TOKEN: ${GITHUB_OAUTH_TOKEN}
+        ports:
+            - ${FAST_CGI_EXPOSED_PORT:-9000}:9000
+        environment:
+            COMPOSER_CACHE_DIR: /root/.composer/cache
+        volumes:
+            - ./symfony:/var/www/html:delegated
+            - ${COMPOSER_CACHE_DIR:-~/.composer/cache}:/root/.composer/cache
+            - ./log/php:/var/log:delegated
+
+    nginx:
+        build: ./docker/nginx
+        ports:
+            - ${HTTP_EXPOSED_PORT:-80}:80
+        volumes:
+            - ./symfony:/var/www/html:delegated
+            - ./log/nginx:/var/log/nginx:delegated
+            - ./docker/nginx/etc/site.conf:/etc/nginx/conf.d/default.conf:delegated
+        depends_on:
+            - php
